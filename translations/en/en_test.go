@@ -10,6 +10,10 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+type Foo struct{}
+
+func (Foo) IsBar() bool { return false }
+
 func TestTranslations(t *testing.T) {
 	eng := english.New()
 	uni := ut.New(eng, eng)
@@ -102,9 +106,13 @@ func TestTranslations(t *testing.T) {
 		GteFieldString     string            `validate:"gtefield=MaxString"`
 		LtFieldString      string            `validate:"ltfield=MaxString"`
 		LteFieldString     string            `validate:"ltefield=MaxString"`
-		AlphaString        string            `validate:"alpha"`
-		AlphanumString     string            `validate:"alphanum"`
-		NumericString      string            `validate:"numeric"`
+		AlphaString           string            `validate:"alpha"`
+		AlphanumString        string            `validate:"alphanum"`
+		AlphaSpaceString      string            `validate:"alphaspace"`
+		AlphaNumSpaceString   string            `validate:"alphanumspace"`
+		AlphaUnicodeString    string            `validate:"alphaunicode"`
+		AlphaNumUnicodeString string            `validate:"alphanumunicode"`
+		NumericString         string            `validate:"numeric"`
 		NumberString       string            `validate:"number"`
 		HexadecimalString  string            `validate:"hexadecimal"`
 		HexColorString     string            `validate:"hexcolor"`
@@ -125,6 +133,7 @@ func TestTranslations(t *testing.T) {
 		ISBN10             string            `validate:"isbn10"`
 		ISBN13             string            `validate:"isbn13"`
 		ISSN               string            `validate:"issn"`
+		URN                string            `validate:"urn_rfc2141"`
 		UUID               string            `validate:"uuid"`
 		UUID3              string            `validate:"uuid3"`
 		UUID4              string            `validate:"uuid4"`
@@ -181,6 +190,7 @@ func TestTranslations(t *testing.T) {
 		CveString          string        `validate:"cve"`
 		MinDuration        time.Duration `validate:"min=1h30m,max=2h"`
 		MaxDuration        time.Duration `validate:"min=1h30m,max=2h"`
+		ValidateFn         Foo           `validate:"validateFn=IsBar"`
 	}
 
 	var test Test
@@ -402,6 +412,10 @@ func TestTranslations(t *testing.T) {
 			expected: "ISSN must be a valid ISSN number",
 		},
 		{
+			ns:       "Test.URN",
+			expected: "URN must be a valid RFC 2141 URN",
+		},
+		{
 			ns:       "Test.Excludes",
 			expected: "Excludes cannot contain the text 'text'",
 		},
@@ -476,6 +490,22 @@ func TestTranslations(t *testing.T) {
 		{
 			ns:       "Test.AlphaString",
 			expected: "AlphaString can only contain alphabetic characters",
+		},
+		{
+			ns:       "Test.AlphaSpaceString",
+			expected: "AlphaSpaceString can only contain alphabetic and space characters",
+		},
+		{
+			ns:       "Test.AlphaNumSpaceString",
+			expected: "AlphaNumSpaceString can only contain alphanumeric and space characters",
+		},
+		{
+			ns:       "Test.AlphaUnicodeString",
+			expected: "AlphaUnicodeString can only contain unicode alphabetic characters",
+		},
+		{
+			ns:       "Test.AlphaNumUnicodeString",
+			expected: "AlphaNumUnicodeString can only contain unicode alphanumeric characters",
 		},
 		{
 			ns:       "Test.LtFieldString",
@@ -805,10 +835,13 @@ func TestTranslations(t *testing.T) {
 			ns:       "Test.MaxDuration",
 			expected: "MaxDuration must be 2h or less",
 		},
+		{
+			ns:       "Test.ValidateFn",
+			expected: "ValidateFn must be a valid object",
+		},
 	}
 
 	for _, tt := range tests {
-
 		var fe validator.FieldError
 
 		for _, e := range errs {
